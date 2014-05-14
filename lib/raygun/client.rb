@@ -1,3 +1,5 @@
+require 'iconv' if RUBY_VERSION < '1.9'
+
 module Raygun
   # client for the Raygun REST APIv1
   # as per http://raygun.io/raygun-providers/rest-json-api?v=1
@@ -26,17 +28,17 @@ module Raygun
 
       def client_details
         {
-          name:      Raygun::CLIENT_NAME,
-          version:   Raygun::VERSION,
-          clientUrl: Raygun::CLIENT_URL
+          :name =>      Raygun::CLIENT_NAME,
+          :version =>   Raygun::VERSION,
+          :clientUrl => Raygun::CLIENT_URL
         }
       end
 
       def error_details(exception)
         {
-          className:  exception.class.to_s,
-          message:    exception.message.encode('UTF-16', :undef => :replace, :invalid => :replace).encode('UTF-8'),
-          stackTrace: (exception.backtrace || []).map { |line| stack_trace_for(line) }
+          :className =>  exception.class.to_s,
+          :message =>    make_unicode(exception.message),
+          :stackTrace => (exception.backtrace || []).map { |line| stack_trace_for(line) }
         }
       end
 
@@ -44,10 +46,18 @@ module Raygun
         # see http://www.ruby-doc.org/core-2.0/Exception.html#method-i-backtrace
         file_name, line_number, method = line.split(":")
         {
-          lineNumber: line_number,
-          fileName:   file_name,
-          methodName: method.gsub(/^in `(.*?)'$/, "\\1")
+          :lineNumber => line_number,
+          :fileName =>   file_name,
+          :methodName => method ? method.gsub(/^in `(.*?)'$/, "\\1") : ''
         }
+      end
+
+      def make_unicode(string)
+        if RUBY_VERSION < '1.9'
+          Iconv.conv("UTF-8//TRANSLIT//IGNORE", 'UTF-16', string.toutf16)
+        else
+          string.encode('UTF-16', :undef => :replace, :invalid => :replace).encode('UTF-8')
+        end
       end
 
       def hostname
@@ -70,14 +80,14 @@ module Raygun
         return {} if env.nil? || env.empty?
 
         {
-          hostName:    env["SERVER_NAME"],
-          url:         env["PATH_INFO"],
-          httpMethod:  env["REQUEST_METHOD"],
-          iPAddress:   env["REMOTE_ADDR"],
-          queryString: Rack::Utils.parse_nested_query(env["QUERY_STRING"]),
-          form:        form_data(env),
-          headers:     headers(env),
-          rawData:     []
+          :hostName =>    env["SERVER_NAME"],
+          :url =>         env["PATH_INFO"],
+          :httpMethod =>  env["REQUEST_METHOD"],
+          :iPAddress =>   env["REMOTE_ADDR"],
+          :queryString => Rack::Utils.parse_nested_query(env["QUERY_STRING"]),
+          :form =>        form_data(env),
+          :headers =>     headers(env),
+          :rawData =>     []
         }
       end
 
@@ -89,10 +99,11 @@ module Raygun
       end
 
       def normalize_raygun_header_key(key)
-        key.sub(/^HTTP_/, '')
-           .sub(/_/, ' ')
-           .split.map(&:capitalize).join(' ')
-           .sub(/ /, '-')
+        key.
+          sub(/^HTTP_/, '').
+          sub(/_/, ' ').
+          split.map(&:capitalize).join(' ').
+          sub(/ /, '-')
       end
 
       def form_data(rack_env)
@@ -107,24 +118,24 @@ module Raygun
         custom_data = env.delete(:custom_data) || {}
 
         error_details = {
-            machineName:    hostname,
-            version:        version,
-            client:         client_details,
-            error:          error_details(exception_instance),
-            userCustomData: Raygun.configuration.custom_data.merge(custom_data),
-            request:        request_information(env)
+            :machineName =>    hostname,
+            :version =>        version,
+            :client =>         client_details,
+            :error =>          error_details(exception_instance),
+            :userCustomData => Raygun.configuration.custom_data.merge(custom_data),
+            :request =>        request_information(env)
         }
 
-        error_details.merge!(user: user_information(env)) if affected_user_present?(env)
+        error_details.merge!(:user => user_information(env)) if affected_user_present?(env)
 
         {
-          occurredOn: Time.now.utc.iso8601,
-          details:    error_details
+          :occurredOn => Time.now.utc.iso8601,
+          :details =>    error_details
         }
       end
 
       def create_entry(payload_hash)
-        self.class.post("/entries", headers: @headers, body: JSON.generate(payload_hash))
+        self.class.post("/entries", :headers => @headers, :body => JSON.generate(payload_hash))
       end
 
       def filter_params(params_hash, extra_filter_keys = nil)
