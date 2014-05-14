@@ -4,7 +4,7 @@ module ActionController
       unless exception_handled_by_rescue_from?(exception)
         env = request.env
 
-        if identifier = AffectedUser.new(self).identifier
+        if identifier = Raygun::AffectedUser.new(self).identifier
           env["raygun.affected_user"] = { :identifier => identifier }
         end
 

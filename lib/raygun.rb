@@ -10,6 +10,7 @@ require "rack"
 require "raygun/version"
 require "raygun/configuration"
 require "raygun/client"
+require "raygun/affected_user"
 require "raygun/middleware/rack_exception_interceptor"
 require "raygun/testable"
 
