@@ -1,4 +1,4 @@
-require_relative "../lib/raygun.rb"
+require File.expand_path('../../lib/raygun.rb', __FILE__)
 require "minitest/autorun"
 require "minitest/pride"
 require "fakeweb"
@@ -31,7 +31,7 @@ class Raygun::UnitTest < MiniTest::Unit::TestCase
   end
 
   def fake_successful_entry
-    FakeWeb.register_uri(:post, "https://api.raygun.io/entries", body: "", status: 202)
+    FakeWeb.register_uri(:post, "https://api.raygun.io/entries", :body =>"", :status =>202)
   end
 
   def teardown

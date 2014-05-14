@@ -2,7 +2,13 @@ module ActionController
   class Base
     def rescue_action_with_raygun(exception)
       unless exception_handled_by_rescue_from?(exception)
-        Raygun.track_exception(exception, request.env)
+        env = request.env
+
+        if identifier = AffectedUser.new(self).identifier
+          env["raygun.affected_user"] = { :identifier => identifier }
+        end
+
+        Raygun.track_exception(exception, env)
       end
       rescue_action_without_raygun exception
     end

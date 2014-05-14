@@ -10,12 +10,12 @@ module Resque
 
       def save
         ::Raygun.track_exception(exception,
-          custom_data: {
-            resque: {
-              worker: worker.to_s,
-              queue:  queue.to_s,
-              job:    payload['class'].to_s,
-              args:   payload['args'].inspect
+          :custom_data => {
+            :resque => {
+              :worker => worker.to_s,
+              :queue =>  queue.to_s,
+              :job =>    payload['class'].to_s,
+              :args =>   payload['args'].inspect
             }
           }
         )

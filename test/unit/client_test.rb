@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-require_relative "../test_helper.rb"
+require File.expand_path('../../test_helper.rb', __FILE__)
 require 'stringio'
 
 class ClientTest < Raygun::UnitTest
@@ -34,11 +34,11 @@ class ClientTest < Raygun::UnitTest
                      "/another/path/foo.rb:1234:in `block (3 levels) run'"])
 
     expected_hash = {
-      className: "ClientTest::TestException",
-      message:   e.message,
-      stackTrace: [
-        { lineNumber: "123",  fileName: "/some/folder/some_file.rb", methodName: "some_method_name" },
-        { lineNumber: "1234", fileName: "/another/path/foo.rb",      methodName: "block (3 levels) run"}
+      :className =>"ClientTest::TestException",
+      :message =>  e.message,
+      :stackTrace =>[
+        { :lineNumber =>"123",  :fileName =>"/some/folder/some_file.rb", :methodName =>"some_method_name" },
+        { :lineNumber =>"1234", :fileName =>"/another/path/foo.rb",      :methodName =>"block (3 levels) run"}
       ]
     }
 
@@ -47,9 +47,9 @@ class ClientTest < Raygun::UnitTest
 
   def test_client_details
     expected_hash = {
-      name:      Raygun::CLIENT_NAME,
-      version:   Raygun::VERSION,
-      clientUrl: Raygun::CLIENT_URL
+      :name =>     Raygun::CLIENT_NAME,
+      :version =>  Raygun::VERSION,
+      :clientUrl =>Raygun::CLIENT_URL
     }
 
     assert_equal expected_hash, @client.send(:client_details)
@@ -83,10 +83,15 @@ class ClientTest < Raygun::UnitTest
   end
 
   def test_bad_encoding
-    bad_message   = (100..1000).to_a.pack('c*').force_encoding('utf-8')
-    bad_exception = TestException.new(bad_message)
-
-    assert !bad_message.valid_encoding?
+    raw_string = (100..1000).to_a.pack('c*')
+    if RUBY_VERSION < '1.9'
+      bad_message =  raw_string
+      bad_exception = TestException.new(bad_message)
+    else
+      bad_message = raw_string.force_encoding('utf-8')
+      bad_exception = TestException.new(bad_message)
+      assert !bad_message.valid_encoding?
+    end
     assert_silent { @client.track_exception(bad_exception) }
   end
 
@@ -98,25 +103,25 @@ class ClientTest < Raygun::UnitTest
                        "/another/path/foo.rb:1234:in `block (3 levels) run'"])
 
       expected_hash = {
-        occurredOn: Time.now.utc.iso8601,
-        details: {
-          machineName:    Socket.gethostname,
-          version:        123,
-          client: {
-            name:      Raygun::CLIENT_NAME,
-            version:   Raygun::VERSION,
-            clientUrl: Raygun::CLIENT_URL
+        :occurredOn =>Time.now.utc.iso8601,
+        :details =>{
+          :machineName =>   Socket.gethostname,
+          :version =>       123,
+          :client =>{
+            :name =>     Raygun::CLIENT_NAME,
+            :version =>  Raygun::VERSION,
+            :clientUrl =>Raygun::CLIENT_URL
           },
-          error: {
-            className: "ClientTest::TestException",
-            message:   e.message,
-            stackTrace: [
-              { lineNumber: "123",  fileName: "/some/folder/some_file.rb", methodName: "some_method_name" },
-              { lineNumber: "1234", fileName: "/another/path/foo.rb",      methodName: "block (3 levels) run"}
+          :error =>{
+            :className =>"ClientTest::TestException",
+            :message =>  e.message,
+            :stackTrace =>[
+              { :lineNumber =>"123",  :fileName =>"/some/folder/some_file.rb", :methodName =>"some_method_name" },
+              { :lineNumber =>"1234", :fileName =>"/another/path/foo.rb",      :methodName =>"block (3 levels) run"}
             ]
           },
-          userCustomData: {},
-          request:        {}
+          :userCustomData =>{},
+          :request =>       {}
         }
       }
 
@@ -149,14 +154,14 @@ class ClientTest < Raygun::UnitTest
     }
 
     expected_hash = {
-      hostName:    "localhost",
-      url:         "/",
-      httpMethod:  "GET",
-      iPAddress:   "127.0.0.1",
-      queryString: { "a" => "b", "c" => "4945438" },
-      form:        nil,
-      headers:     { "Version"=>"HTTP/1.1", "Host"=>"localhost:3000", "Connection"=>"keep-alive", "Cache-Control"=>"max-age=0", "Accept"=>"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "User-Agent"=>"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.22 Safari/537.36", "Accept-Encoding"=>"gzip,deflate,sdch", "Accept-Language"=>"en-US,en;q=0.8", "Cookie"=>"cookieval" },
-      rawData:     []
+      :hostName =>   "localhost",
+      :url =>        "/",
+      :httpMethod => "GET",
+      :iPAddress =>  "127.0.0.1",
+      :queryString =>{ "a" => "b", "c" => "4945438" },
+      :form =>       nil,
+      :headers =>    { "Version"=>"HTTP/1.1", "Host"=>"localhost:3000", "Connection"=>"keep-alive", "Cache-Control"=>"max-age=0", "Accept"=>"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "User-Agent"=>"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.22 Safari/537.36", "Accept-Encoding"=>"gzip,deflate,sdch", "Accept-Language"=>"en-US,en;q=0.8", "Cookie"=>"cookieval" },
+      :rawData =>    []
     }
 
     assert_equal expected_hash, @client.send(:request_information, sample_env_hash)

@@ -1,4 +1,4 @@
-require_relative "../test_helper.rb"
+require File.expand_path('../../test_helper.rb', __FILE__)
 
 # Very simple test
 class ResqueFailureTest < Raygun::UnitTest
@@ -15,7 +15,7 @@ class ResqueFailureTest < Raygun::UnitTest
       StandardError.new("Worker Problem"),
       "TestWorker PID 123",
       "super_important_jobs",
-      class: "SendCookies", args: [ "nik" ]
+      :class => "SendCookies", :args => [ "nik" ]
     ).save.success?
   end
 

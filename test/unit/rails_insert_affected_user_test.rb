@@ -1,4 +1,4 @@
-require_relative "../test_helper.rb"
+require File.expand_path('../../test_helper.rb', __FILE__)
 require 'ostruct'
 require 'raygun/middleware/rails_insert_affected_user'
 
@@ -9,11 +9,11 @@ class ClientTest < Raygun::UnitTest
   class MockController
 
     def user_with_email
-      OpenStruct.new(email: "testemail@something.com")
+      OpenStruct.new(:email => "testemail@something.com")
     end
 
     def user_with_login
-      OpenStruct.new(login: "topsecret")
+      OpenStruct.new(:login => "topsecret")
     end
 
     def user_as_string
@@ -49,7 +49,7 @@ class ClientTest < Raygun::UnitTest
 
     begin
       @middleware.call("action_controller.instance" => @controller)
-    rescue TestException 
+    rescue TestException
       user_hash = { :identifier => "testemail@something.com" }
       assert_equal user_hash, @app.env["raygun.affected_user"]
     end
@@ -57,13 +57,13 @@ class ClientTest < Raygun::UnitTest
 
   def test_inserting_user_object_with_login
     Raygun.configuration.affected_user_method = :user_with_login
-    Raygun.configuration.affected_user_identifier_methods << :login
-    
+    Raygun.configuration.affected_user_identifier_methods = [:login, :email]
+
     assert @controller.respond_to?(Raygun.configuration.affected_user_method)
 
     begin
       @middleware.call("action_controller.instance" => @controller)
-    rescue TestException 
+    rescue TestException
       user_hash = { :identifier => "topsecret" }
       assert_equal user_hash, @app.env["raygun.affected_user"]
     end
@@ -71,11 +71,12 @@ class ClientTest < Raygun::UnitTest
 
   def test_inserting_user_as_plain_string
     Raygun.configuration.affected_user_method = :user_as_string
+    Raygun.configuration.affected_user_identifier_methods = [:login, :email]
     assert @controller.respond_to?(Raygun.configuration.affected_user_method)
 
     begin
       @middleware.call("action_controller.instance" => @controller)
-    rescue TestException 
+    rescue TestException
       user_hash = { :identifier => "some-string-identifier" }
       assert_equal user_hash, @app.env["raygun.affected_user"]
     end
@@ -87,7 +88,7 @@ class ClientTest < Raygun::UnitTest
 
     begin
       @middleware.call("action_controller.instance" => @controller)
-    rescue TestException 
+    rescue TestException
       assert_nil @app.env["raygun.affected_user"]
     end
   end
