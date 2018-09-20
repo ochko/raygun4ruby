@@ -54,7 +54,7 @@ module Raygun
 
       def make_unicode(string)
         if RUBY_VERSION < '1.9'
-          Iconv.conv("UTF-8//TRANSLIT//IGNORE", 'UTF-16', string.toutf16)
+          Iconv.conv("UTF-8//TRANSLIT//IGNORE", 'UTF-16BE', string.toutf16)
         else
           string.encode('UTF-16', :undef => :replace, :invalid => :replace).encode('UTF-8')
         end
